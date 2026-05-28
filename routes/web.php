@@ -7,6 +7,7 @@ use App\Http\Controllers\CitoyenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InscriptionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StatsController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,9 +18,6 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/inscription/{annonce}', [InscriptionController::class, 'store'])->name('inscription.store');
     Route::delete('/inscription/{inscription}', [InscriptionController::class, 'destroy'])->name('inscription.destroy');
@@ -51,6 +49,15 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
     Route::delete('/admin/annonce/{id}', [AdminController::class, 'supprimerAnnonce'])->name('admin.supprimerAnnonce');
     Route::delete('/admin/inscription/{id}', [AdminController::class, 'supprimerInscription'])->name('admin.supprimerInscription');
 
+
+    Route::get('/profil', [ProfileController::class, 'index'])->middleware('auth')->name('profil');
+    Route::put('/profil/infos', [ProfileController::class, 'updateInfos'])->middleware('auth')->name('profil.updateInfos');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->middleware('auth')->name('profil.updatePassword');
+
+    Route::get('/statistiques', [StatsController::class, 'index'])->middleware('auth')->name('statistiques');
+
+    Route::get('/annonceur/presence/{id}', [AnnonceurController::class, 'presence'])->middleware('auth')->name('annonceur.presence');
+    Route::post('/annonceur/presence/{id}', [AnnonceurController::class, 'presenceStore'])->middleware('auth')->name('annonceur.presenceStore');
 });
 
 

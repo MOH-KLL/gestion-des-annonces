@@ -135,4 +135,57 @@ public function destroy($id){
                 }),
             ]);
         }
+            public function presence($id){
+                $user = Auth::user();
+                $annonce = $user->annonces()->with('inscriptions.user')->findOrFail($id);
+
+                $participants = $annonce->inscriptions->map(function ($inscription) {
+                    return [
+                        'id' => $inscription->id,
+                        'user_id' => $inscription->user_id,
+                        'nom' => $inscription->user->name,
+                        'est_present' => $inscription->est_present ?? null,
+                    ];
+                });
+
+                return Inertia::render('Dashboard/Presence', [
+                    'auth' => ['user' => $user],
+                    'annonce' => $annonce,
+                    'participants' => $participants,
+                ]);
+            }
+
+            public function presenceStore(Request $request, $id)
+            {
+                $user = Auth::user();
+                $annonce = $user->annonces()->findOrFail($id);
+
+                $request->validate([
+                    'presences' => 'required|array',
+                    'presences.*.user_id' => 'required|integer',
+                    'presences.*.est_present' => 'required|boolean',
+                ]);
+
+                foreach ($request->presences as $presence) {
+                    $inscription = $annonce->inscriptions()->where('user_id', $presence['user_id'])->first();
+                    
+                    if ($inscription) {
+                        $inscription->update([
+                            'est_present' => $presence['est_present'],
+                            'points_supplementaires' => $presence['est_present'] ? 5 : 0,
+                        ]);
+
+                        $citoyen = $inscription->user;
+                        
+                        if ($presence['est_present']) {
+                            $citoyen->increment('score_civique', 20);
+                        } else {
+                            $citoyen->decrement('score_civique', 15);
+                        }
+                    }
+                }
+                $annonce->update(['statut' => 'terminee']);
+
+                return redirect()->route('dashboard')->with('success', 'Présences enregistrées et scores mis à jour.');
+            }
 }
